@@ -56,6 +56,9 @@ MAX_AVITO_REVIEWS = 9  # сколько отзывов Авито класть �
 
 
 def avito_token():
+    if not os.environ.get("AVITO_CLIENT_ID") or not os.environ.get("AVITO_CLIENT_SECRET"):
+        raise SystemExit("Нет ключей Авито: добавьте секреты AVITO_CLIENT_ID и AVITO_CLIENT_SECRET "
+                         "(Settings → Secrets and variables → Actions)")
     r = requests.post(
         "https://api.avito.ru/token",
         data={
