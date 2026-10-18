@@ -8,6 +8,8 @@
   var YA_ORG = '111938430078';
   var CACHE_KEY = 'oac_reviews_v1', CACHE_MS = 6 * 3600 * 1000;
   var dataPromise = null;
+  // запасные данные — если GitHub временно недоступен
+  var FALLBACK = {"total_reviews": 440, "sources": {"meshok": {"name": "Мешок", "rating": 5.0, "count": 182, "reviews_total": 282, "url": "https://meshok.net/info/1656529", "updated_manually": "2026-10-18"}, "avito": {"name": "Авито", "rating": 4.9, "count": 139, "reviews_total": 143, "url": "https://www.avito.ru/user/86cce34656e33bfb47f5f81e76324bbd/profile"}, "yandex": {"name": "Яндекс Карты", "org_id": "111938430078", "url": "https://yandex.ru/maps/org/111938430078/reviews/", "rating": 4.8, "count": 15}}, "reviews": [{"name": "Jaroslavich", "date": "2026-07-15", "text": "Отличный продавец. Хороший предмет за разумные деньги. Быстрая отправка. Хорошая упаковка. Очень доволен, рекомендую продавца!", "src": "meshok"}, {"src": "avito", "name": "Александра", "text": "Всё отлично! Товар быстро отправили, хорошо упаковали. Покупкой довольна.", "date": "2026-08-16", "item": "Солонка серебро 950 пробы Хрусталь Франция Париж"}, {"name": "pimial60", "date": "2026-09-17", "text": "Быстрая сделка. Лот полностью соответствует описанию. Рекомендую к сотрудничеству.", "src": "meshok"}, {"src": "avito", "name": "Вадим", "text": "Все отлично, покупкой доволен,товар соответствует! Продавец просто топчик, всю информацию и видео предоставил, хорошо упаковал и быстро отправил!", "date": "2026-08-09", "item": "Зажигалка бензиновая немецкая винтажная Rowenta"}, {"name": "stepanov.alexander99", "date": "2026-07-17", "text": "Отличный продавец!!! Замечательное общение!!! Прекрасная посылка!!!", "src": "meshok"}, {"src": "avito", "name": "Юлия", "text": "Отличный магазин. Бокалы очень красивые,  были хорошо упакованы, и быстро отправлены. Спасибо!", "date": "2026-07-22", "item": "Хрустальные бокалы для вина Франция Антиквариат"}]};
 
   function getData() {
     if (dataPromise) return dataPromise;
@@ -15,10 +17,10 @@
       var c = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
       if (c && Date.now() - c.t < CACHE_MS) return (dataPromise = Promise.resolve(c.d));
     } catch (e) {}
-    dataPromise = fetch(JSON_URL).then(function (r) { return r.json(); }).then(function (d) {
+    dataPromise = fetch(JSON_URL).then(function (r) { if (!r.ok) throw 0; return r.json(); }).then(function (d) {
       try { localStorage.setItem(CACHE_KEY, JSON.stringify({ t: Date.now(), d: d })); } catch (e) {}
       return d;
-    });
+    }).catch(function () { return FALLBACK; });
     return dataPromise;
   }
 
@@ -160,8 +162,12 @@
       + '<div class="oac-pop__ttl"><span>Отзывы</span> покупателей</div>'
       + '<p class="oac-pop__rt">Мешок <b>' + num(s.meshok.rating) + '</b> · Авито <b>' + num(s.avito.rating) + '</b> · Яндекс Карты <b>' + num(s.yandex.rating) + '</b></p>'
       + (d.reviews || []).slice(0, 4).map(cardHtml).join('')
-      + '<div style="text-align:center;margin-top:18px"><a class="oac-btn oac-btn_line" href="/company#reviews">Все отзывы →</a></div></div>';
-    w.addEventListener('click', function (e) { if (e.target === w || e.target.classList.contains('oac-pop__x')) w.remove(); });
+      + '<div style="text-align:center;margin-top:18px"><a class="oac-btn oac-btn_line oac-pop__all" href="#oac-reviews">Все отзывы →</a></div></div>';
+    w.addEventListener('click', function (e) { if (e.target === w || e.target.classList.contains('oac-pop__x')) w.remove();
+      if (e.target.classList.contains('oac-pop__all')) {
+        e.preventDefault(); w.remove();
+        var b = document.getElementById('oac-reviews'); if (b) b.scrollIntoView({ behavior: 'smooth' });
+      } });
     document.body.appendChild(w);
   }
   function lineHtml(d) {
